@@ -21,7 +21,7 @@
 
   <div class="container">
 
-```
+
 <!-- PESERTA -->
 <div class="card">
   <div class="card-header">
@@ -31,41 +31,56 @@
   <div class="counter-row">
     <button class="counter-btn" onclick="changeParticipants(-1)">−</button>
     <input type="number" id="participants" value="20" min="0"
-      oninput="recalculate()" class="counter-input" />
+      oninput="updateAll()" class="counter-input" />
     <button class="counter-btn" onclick="changeParticipants(1)">+</button>
   </div>
-  <div class="jeep-info" id="jeepInfo">🚙 Jumlah Jeep: <strong>4 unit</strong> ⌈20 ÷ 5⌉</div>
+  <div class="jeep-info">
+    🚙 Jumlah Jeep: <strong id="jeepCount">4 unit</strong>
+    <span class="jeep-formula">(⌈20 ÷ 5⌉)</span>
+  </div>
 </div>
 
 <!-- BIAYA TETAP -->
-<div class="card gray">
-  <div class="card-header">
-    <span class="icon">📈</span>
-    <h2>Biaya Tetap</h2>
-    <button class="add-btn purple" onclick="addCost('fixed')">+ Tambah</button>
+<div class="card card-gray">
+  <div class="section-header">
+    <div class="card-header">
+      <span class="icon">📈</span>
+      <h2>Biaya Tetap</h2>
+    </div>
+    <button class="add-btn btn-purple" onclick="addCost('fixed')">
+      + Tambah
+    </button>
   </div>
-  <div id="fixedList"></div>
-  <div class="total-row">
+  <div id="fixedCosts"></div>
+  <div class="section-total">
     <span>Total Biaya Tetap</span>
-    <strong id="totalFixed" class="purple">Rp 0</strong>
+    <span id="totalFixed" class="total-value purple">Rp 0</span>
   </div>
 </div>
 
 <!-- BIAYA VARIABEL -->
-<div class="card gray">
-  <div class="card-header">
-    <span class="icon">💵</span>
-    <h2>Biaya Variabel <small>(per orang)</small></h2>
-    <button class="add-btn blue" onclick="addCost('variable')">+ Tambah</button>
+<div class="card card-gray">
+  <div class="section-header">
+    <div class="card-header">
+      <span class="icon">💵</span>
+      <h2>Biaya Variabel <small>(per orang)</small></h2>
+    </div>
+    <button class="add-btn btn-blue" onclick="addCost('variable')">
+      + Tambah
+    </button>
   </div>
-  <div id="variableList"></div>
-  <div class="total-row">
-    <span>Per Orang</span>
-    <strong id="totalVarPerson" class="blue">Rp 0</strong>
-  </div>
-  <div class="total-row">
-    <span id="totalVarLabel">Total (20 orang)</span>
-    <strong id="totalVar" class="blue">Rp 0</strong>
+  <div id="variableCosts"></div>
+  <div class="section-total">
+    <div class="var-subtotals">
+      <div class="flex-row">
+        <span>Per Orang</span>
+        <span id="totalVarPerPerson" class="total-value blue">Rp 0</span>
+      </div>
+      <div class="flex-row">
+        <span id="totalVarLabel">Total (20 orang)</span>
+        <span id="totalVar" class="total-value blue">Rp 0</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -79,62 +94,62 @@
     <button class="counter-btn orange" onclick="changeProfit(-1)">−</button>
     <div class="profit-input-wrap">
       <input type="number" id="profitPct" value="20" min="0"
-        oninput="recalculate()" class="counter-input" />
+        oninput="updateAll()" class="counter-input" />
       <span class="pct-sign">%</span>
     </div>
     <button class="counter-btn orange" onclick="changeProfit(1)">+</button>
   </div>
   <div class="profit-grid">
     <div class="profit-box orange-box">
-      <div class="label">Nilai Profit</div>
-      <div class="value orange" id="profitValue">Rp 0</div>
+      <div class="box-label">Nilai Profit</div>
+      <div id="profitValue" class="box-value orange">Rp 0</div>
     </div>
     <div class="profit-box green-box">
-      <div class="label">Total Keseluruhan</div>
-      <div class="value green" id="totalBase">Rp 0</div>
+      <div class="box-label">Total Keseluruhan</div>
+      <div id="totalCost" class="box-value green">Rp 0</div>
     </div>
   </div>
 </div>
 
 <p class="tip">💡 Tap 🚙 pada item untuk mengaktifkan formula Jeep otomatis</p>
-```
 
-  </div><!-- end container -->
+
+  </div>
 
   <!-- STICKY BOTTOM -->
 
-  <div class="sticky-bottom">
+  <div class="sticky-bottom" id="stickyBottom">
     <div id="summaryDetail" class="summary-detail hidden">
       <div class="summary-grid">
-        <div class="sbox purple-box">
-          <div class="label">Biaya Tetap</div>
-          <div class="value purple" id="sFixed">Rp 0</div>
+        <div class="sum-box purple-box">
+          <div class="box-label">Biaya Tetap</div>
+          <div id="sumFixed" class="box-value purple">Rp 0</div>
         </div>
-        <div class="sbox blue-box2">
-          <div class="label">Biaya Variabel</div>
-          <div class="value blue" id="sVar">Rp 0</div>
+        <div class="sum-box blue-box">
+          <div class="box-label">Biaya Variabel</div>
+          <div id="sumVar" class="box-value blue">Rp 0</div>
         </div>
-        <div class="sbox orange-box">
-          <div class="label">Profit (<span id="sPct">20</span>%)</div>
-          <div class="value orange" id="sProfit">Rp 0</div>
+        <div class="sum-box orange-box2">
+          <div class="box-label" id="sumProfitLabel">Profit (20%)</div>
+          <div id="sumProfit" class="box-value orange">Rp 0</div>
         </div>
-        <div class="sbox green-box">
-          <div class="label">Total Keseluruhan</div>
-          <div class="value green" id="sTotal">Rp 0</div>
+        <div class="sum-box green-box2">
+          <div class="box-label">Total Keseluruhan</div>
+          <div id="sumTotal" class="box-value green">Rp 0</div>
         </div>
       </div>
     </div>
-    <div class="bottom-bar">
+    <div class="sticky-bar">
       <div>
-        <div class="label">Harga Per Orang</div>
-        <div class="price-big orange" id="pricePerPerson">Rp 0</div>
+        <div class="sticky-label">Harga Per Orang</div>
+        <div id="pricePerPerson" class="sticky-price orange">Rp 0</div>
       </div>
       <div class="text-right">
-        <div class="label">Total + Profit</div>
-        <div class="price-mid green" id="totalWithProfit">Rp 0</div>
+        <div class="sticky-label">Total + Profit</div>
+        <div id="totalWithProfit" class="sticky-price green">Rp 0</div>
       </div>
-      <button class="detail-btn" onclick="toggleSummary()">
-        <span id="detailArrow">▲</span> Detail
+      <button class="detail-btn" onclick="toggleSummary()" id="detailBtn">
+        ▲ Detail
       </button>
     </div>
   </div>
