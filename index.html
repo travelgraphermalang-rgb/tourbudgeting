@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -9,11 +8,10 @@
 </head>
 <body>
 
-  <!-- HEADER -->
-
+  <!-- Header -->
   <div class="header">
     <div class="header-title">
-      <span class="icon">📍</span>
+      <span class="header-icon">📍</span>
       <h1>Tour Pricing Calculator</h1>
     </div>
     <p class="header-sub">Qty × Freq × Price | 🚙 Jeep = ⌈peserta ÷ 5⌉</p>
@@ -21,140 +19,187 @@
 
   <div class="container">
 
-
-<!-- PESERTA -->
-<div class="card">
-  <div class="card-header">
-    <span class="icon">👥</span>
-    <h2>Jumlah Peserta</h2>
-  </div>
-  <div class="counter-row">
-    <button class="counter-btn" onclick="changeParticipants(-1)">−</button>
-    <input type="number" id="participants" value="20" min="0"
-      oninput="updateAll()" class="counter-input" />
-    <button class="counter-btn" onclick="changeParticipants(1)">+</button>
-  </div>
-  <div class="jeep-info">
-    🚙 Jumlah Jeep: <strong id="jeepCount">4 unit</strong>
-    <span class="jeep-formula">(⌈20 ÷ 5⌉)</span>
-  </div>
-</div>
-
-<!-- BIAYA TETAP -->
-<div class="card card-gray">
-  <div class="section-header">
-    <div class="card-header">
-      <span class="icon">📈</span>
-      <h2>Biaya Tetap</h2>
+    <!-- Participants -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">👥</span>
+        <h2>Jumlah Peserta</h2>
+      </div>
+      <div class="counter-row">
+        <button class="counter-btn" onclick="changeParticipants(-1)">−</button>
+        <input type="number" id="participants" value="20" min="0"
+          oninput="setParticipants(this.value)" class="counter-input" />
+        <button class="counter-btn" onclick="changeParticipants(1)">+</button>
+      </div>
+      <div class="jeep-info">
+        🚙 Jumlah Jeep: <strong id="jeepCount">4 unit</strong>
+        <span class="jeep-formula">(⌈peserta ÷ 5⌉)</span>
+      </div>
     </div>
-    <button class="add-btn btn-purple" onclick="addCost('fixed')">
-      + Tambah
-    </button>
-  </div>
-  <div id="fixedCosts"></div>
-  <div class="section-total">
-    <span>Total Biaya Tetap</span>
-    <span id="totalFixed" class="total-value purple">Rp 0</span>
-  </div>
-</div>
 
-<!-- BIAYA VARIABEL -->
-<div class="card card-gray">
-  <div class="section-header">
-    <div class="card-header">
-      <span class="icon">💵</span>
-      <h2>Biaya Variabel <small>(per orang)</small></h2>
+    <!-- Fixed Costs -->
+    <div class="card card-gray">
+      <div class="card-header">
+        <span class="card-icon">📈</span>
+        <h2>Biaya Tetap</h2>
+        <button class="add-btn btn-purple" onclick="addCost('fixed')">+ Tambah</button>
+      </div>
+      <div id="fixedCostList"></div>
+      <div class="subtotal-row">
+        <span>Total Biaya Tetap</span>
+        <span id="totalFixed" class="total-purple">Rp 0</span>
+      </div>
     </div>
-    <button class="add-btn btn-blue" onclick="addCost('variable')">
-      + Tambah
-    </button>
-  </div>
-  <div id="variableCosts"></div>
-  <div class="section-total">
-    <div class="var-subtotals">
-      <div class="flex-row">
+
+    <!-- Variable Costs -->
+    <div class="card card-gray">
+      <div class="card-header">
+        <span class="card-icon">💲</span>
+        <h2>Biaya Variabel <small>(per orang)</small></h2>
+        <button class="add-btn btn-blue" onclick="addCost('variable')">+ Tambah</button>
+      </div>
+      <div id="variableCostList"></div>
+      <div class="subtotal-row">
         <span>Per Orang</span>
-        <span id="totalVarPerPerson" class="total-value blue">Rp 0</span>
+        <span id="totalVarPerPerson" class="total-blue">Rp 0</span>
       </div>
-      <div class="flex-row">
-        <span id="totalVarLabel">Total (20 orang)</span>
-        <span id="totalVar" class="total-value blue">Rp 0</span>
+      <div class="subtotal-row">
+        <span>Total (<span id="varParticipantLabel">20</span> orang)</span>
+        <span id="totalVarGroup" class="total-blue bold">Rp 0</span>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- PROFIT -->
-<div class="card">
-  <div class="card-header">
-    <span class="icon">📈</span>
-    <h2>Profit / Keuntungan</h2>
-  </div>
-  <div class="counter-row">
-    <button class="counter-btn orange" onclick="changeProfit(-1)">−</button>
-    <div class="profit-input-wrap">
-      <input type="number" id="profitPct" value="20" min="0"
-        oninput="updateAll()" class="counter-input" />
-      <span class="pct-sign">%</span>
-    </div>
-    <button class="counter-btn orange" onclick="changeProfit(1)">+</button>
-  </div>
-  <div class="profit-grid">
-    <div class="profit-box orange-box">
-      <div class="box-label">Nilai Profit</div>
-      <div id="profitValue" class="box-value orange">Rp 0</div>
-    </div>
-    <div class="profit-box green-box">
-      <div class="box-label">Total Keseluruhan</div>
-      <div id="totalCost" class="box-value green">Rp 0</div>
-    </div>
-  </div>
-</div>
-
-<p class="tip">💡 Tap 🚙 pada item untuk mengaktifkan formula Jeep otomatis</p>
-
-
-  </div>
-
-  <!-- STICKY BOTTOM -->
-
-  <div class="sticky-bottom" id="stickyBottom">
-    <div id="summaryDetail" class="summary-detail hidden">
-      <div class="summary-grid">
-        <div class="sum-box purple-box">
-          <div class="box-label">Biaya Tetap</div>
-          <div id="sumFixed" class="box-value purple">Rp 0</div>
+    <!-- Profit -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <h2>Profit / Keuntungan</h2>
+      </div>
+      <div class="counter-row">
+        <button class="counter-btn btn-orange" onclick="changeProfit(-1)">−</button>
+        <div class="profit-input-wrap">
+          <input type="number" id="profitPct" value="20" min="0"
+            oninput="setProfit(this.value)" class="counter-input" />
+          <span class="pct-sign">%</span>
         </div>
-        <div class="sum-box blue-box">
-          <div class="box-label">Biaya Variabel</div>
-          <div id="sumVar" class="box-value blue">Rp 0</div>
+        <button class="counter-btn btn-orange" onclick="changeProfit(1)">+</button>
+      </div>
+      <div class="profit-grid">
+        <div class="profit-box box-orange">
+          <div class="box-label">Nilai Profit</div>
+          <div class="box-value orange" id="profitValue">Rp 0</div>
         </div>
-        <div class="sum-box orange-box2">
-          <div class="box-label" id="sumProfitLabel">Profit (20%)</div>
-          <div id="sumProfit" class="box-value orange">Rp 0</div>
-        </div>
-        <div class="sum-box green-box2">
+        <div class="profit-box box-green">
           <div class="box-label">Total Keseluruhan</div>
-          <div id="sumTotal" class="box-value green">Rp 0</div>
+          <div class="box-value green" id="totalNoProfit">Rp 0</div>
         </div>
       </div>
     </div>
-    <div class="sticky-bar">
-      <div>
+
+    <p class="tip">💡 Tap 🚙 pada item untuk mengaktifkan formula Jeep otomatis</p>
+
+  </div>
+
+  <!-- Sticky Bottom -->
+  <div class="sticky-bottom" id="stickyBottom">
+    <div class="summary-detail" id="summaryDetail" style="display:none;">
+      <div class="summary-grid">
+        <div class="sum-box purple">
+          <div class="sum-label">Biaya Tetap</div>
+          <div class="sum-val" id="sumFixed">Rp 0</div>
+        </div>
+        <div class="sum-box blue">
+          <div class="sum-label">Biaya Variabel</div>
+          <div class="sum-val" id="sumVar">Rp 0</div>
+        </div>
+        <div class="sum-box orange">
+          <div class="sum-label">Profit (<span id="sumProfitPct">20</span>%)</div>
+          <div class="sum-val" id="sumProfit">Rp 0</div>
+        </div>
+        <div class="sum-box green">
+          <div class="sum-label">Total Keseluruhan</div>
+          <div class="sum-val" id="sumTotal">Rp 0</div>
+        </div>
+      </div>
+    </div>
+    <div class="sticky-main">
+      <div class="sticky-left">
         <div class="sticky-label">Harga Per Orang</div>
-        <div id="pricePerPerson" class="sticky-price orange">Rp 0</div>
+        <div class="sticky-price orange" id="pricePerPerson">Rp 0</div>
       </div>
-      <div class="text-right">
+      <div class="sticky-right">
         <div class="sticky-label">Total + Profit</div>
-        <div id="totalWithProfit" class="sticky-price green">Rp 0</div>
+        <div class="sticky-price green" id="totalWithProfit">Rp 0</div>
       </div>
-      <button class="detail-btn" onclick="toggleSummary()" id="detailBtn">
-        ▲ Detail
+      <button class="detail-btn" onclick="toggleDetail()">
+        <span id="detailIcon">▲</span> Detail
       </button>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <div style="height: 80px;"></div>
 
+  <!-- PDF Export Button -->
+  <div class="container">
+    <button class="export-btn" onclick="exportPDF()">
+      📄 Export ke PDF
+    </button>
+  </div>
+
+  <!-- PDF Preview Area (hidden, used for print) -->
+  <div id="pdfPreview" class="pdf-preview" style="display:none;">
+    <div class="pdf-header">
+      <h1>📍 Tour Pricing Calculator</h1>
+      <p id="pdf-date"></p>
+    </div>
+    <div class="pdf-section">
+      <h2>👥 Peserta & Jeep</h2>
+      <table>
+        <tr><td>Jumlah Peserta</td><td id="pdf-participants"></td></tr>
+        <tr><td>Jumlah Jeep</td><td id="pdf-jeep"></td></tr>
+      </table>
+    </div>
+    <div class="pdf-section">
+      <h2>📈 Biaya Tetap</h2>
+      <table>
+        <thead><tr><th>Nama</th><th>Qty</th><th>Freq</th><th>Harga</th><th>Subtotal</th></tr></thead>
+        <tbody id="pdf-fixed"></tbody>
+        <tfoot><tr><td colspan="4"><strong>Total Biaya Tetap</strong></td><td id="pdf-total-fixed"></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="pdf-section">
+      <h2>💲 Biaya Variabel (per orang)</h2>
+      <table>
+        <thead><tr><th>Nama</th><th>Freq</th><th>Harga</th><th>Subtotal/org</th></tr></thead>
+        <tbody id="pdf-variable"></tbody>
+        <tfoot>
+          <tr><td colspan="3">Per Orang</td><td id="pdf-var-per"></td></tr>
+          <tr><td colspan="3" id="pdf-var-group-label"></td><td id="pdf-var-group"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="pdf-section">
+      <h2>📊 Ringkasan Biaya</h2>
+      <table>
+        <tr><td>Total Biaya Tetap</td><td id="pdf-sum-fixed"></td></tr>
+        <tr><td>Total Biaya Variabel</td><td id="pdf-sum-var"></td></tr>
+        <tr><td>Total Keseluruhan (sebelum profit)</td><td id="pdf-sum-total"></td></tr>
+        <tr><td id="pdf-profit-label"></td><td id="pdf-sum-profit"></td></tr>
+      </table>
+    </div>
+    <div class="pdf-result">
+      <div class="pdf-result-box">
+        <div>Grand Total</div>
+        <div id="pdf-grand-total"></div>
+      </div>
+      <div class="pdf-result-box highlight">
+        <div>💰 Harga Per Orang</div>
+        <div id="pdf-price-per-person"></div>
+      </div>
+    </div>
+    <div class="pdf-footer">Dicetak dengan Tour Pricing Calculator</div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

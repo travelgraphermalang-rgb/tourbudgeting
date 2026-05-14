@@ -1,161 +1,144 @@
-// ─── STATE ───────────────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────
+let participants = 20;
+let profitPct = 20;
+let nextFixedId = 4;
+let nextVarId = 3;
+
 let fixedCosts = [
-  { id: 1, name: 'Pemandu Wisata',  qty: 2, frequency: 1, price: 250000, autoJeep: false },
-  { id: 2, name: 'Jeep Wisata',     qty: 1, frequency: 1, price: 300000, autoJeep: true  },
-  { id: 3, name: 'Bus Transport',   qty: 1, frequency: 1, price: 2000000, autoJeep: false },
+  { id: 1, name: 'Pemandu Wisata', qty: 2, frequency: 1, price: 250000, autoJeep: false },
+  { id: 2, name: 'Jeep Wisata',    qty: 1, frequency: 1, price: 300000, autoJeep: true  },
+  { id: 3, name: 'Bus Transport',  qty: 1, frequency: 1, price: 2000000, autoJeep: false },
 ];
+
 let variableCosts = [
   { id: 1, name: 'Makan Siang',      qty: 1, frequency: 2, price: 75000,  autoJeep: false },
   { id: 2, name: 'Tiket Masuk Jeep', qty: 1, frequency: 1, price: 150000, autoJeep: true  },
 ];
-let nextFixedId    = 4;
-let nextVariableId = 3;
-let summaryOpen    = false;
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────
+const ceilDiv = (a, b) => Math.ceil(a / b);
+const jeepCount = () => ceilDiv(participants, 5);
 const fmt = v => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', minimumFractionDigits: 0
 }).format(v);
 
-const ceilDiv = (p, n) => Math.ceil(p / n);
-
-function getParticipants() {
-  return Math.max(0, parseInt(document.getElementById('participants').value) || 0);
-}
-function getProfitPct() {
-  return Math.max(0, parseFloat(document.getElementById('profitPct').value) || 0);
-}
-function getJeepCount() {
-  return ceilDiv(getParticipants(), 5);
-}
-function resolveQty(cost) {
-  return cost.autoJeep ? getJeepCount() : cost.qty;
+function getQty(cost) {
+  return cost.autoJeep ? jeepCount() : cost.qty;
 }
 
-// ─── RENDER COST CARD ─────────────────────────────────────────────────────────
-function renderCostCard(cost, type) {
-  const isVariable  = type === 'variable';
-  const jeepActive  = cost.autoJeep;
-  const jeepCount   = getJeepCount();
-  const qty         = resolveQty(cost);
-  const subtotal    = isVariable
-    ? cost.frequency * cost.price
-    : qty * cost.frequency * cost.price;
-  const formula     = isVariable
-    ? `${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`
-    : `${qty} × ${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`;
+// ── Render ───────────────────────────────────────────────
+function renderAll() {
+  // Jeep count display
+  document.getElementById('jeepCount').textContent = jeepCount() + ' unit';
 
-  const qtyField = jeepActive
-    ? `<div class="jeep-qty-box">${jeepCount} 🚙</div>`
-    : `<input type="number" class="field-input" min="0" value="${cost.qty}"
-         oninput="updateCostField('${type}',${cost.id},'qty',this.value)" />`;
+  renderList('fixed');
+  renderList('variable');
+  updateTotals();
+}
 
-  return `
-    <div class="cost-card ${jeepActive ? 'jeep-active' : ''}" id="card-${type}-${cost.id}">
-      <div class="cost-card-top">
-        <input type="text" placeholder="Nama biaya" value="${cost.name}"
-          oninput="updateCostField('${type}',${cost.id},'name',this.value)" />
-        <button class="jeep-toggle ${jeepActive ? 'active' : ''}"
-          onclick="toggleJeep('${type}',${cost.id})">🚙</button>
-        <button class="delete-btn" onclick="deleteCost('${type}',${cost.id})">🗑</button>
+function renderList(type) {
+  const isFixed = type === 'fixed';
+  const list = isFixed ? fixedCosts : variableCosts;
+  const containerId = isFixed ? 'fixedCostList' : 'variableCostList';
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  list.forEach(cost => {
+    const qty = cost.autoJeep ? jeepCount() : cost.qty;
+    const subtotal = isFixed
+      ? qty * cost.frequency * cost.price
+      : cost.frequency * cost.price;
+    const formula = isFixed
+      ? `${qty} × ${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`
+      : `${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`;
+
+    const qtyField = cost.autoJeep
+      ? `<div class="jeep-qty-display">${qty} 🚙</div>`
+      : `<input type="number" class="field-input" value="${cost.qty}" min="0"
+           oninput="updateCost('${type}', ${cost.id}, 'qty', this.value)" />`;
+
+    const gridClass = isFixed ? 'grid3' : 'grid2';
+    const qtyCol = isFixed ? `
+      <div>
+        <label class="field-label">Qty</label>
+        ${qtyField}
+      </div>` : '';
+
+    const div = document.createElement('div');
+    div.className = 'cost-item' + (cost.autoJeep ? ' jeep-active' : '');
+    div.innerHTML = `
+      <div class="cost-item-header">
+        <input type="text" class="cost-name" placeholder="Nama biaya" value="${cost.name}"
+          oninput="updateCost('${type}', ${cost.id}, 'name', this.value)" />
+        <button class="jeep-toggle ${cost.autoJeep ? 'active' : ''}"
+          onclick="toggleJeep('${type}', ${cost.id})">🚙</button>
+        <button class="delete-btn" onclick="deleteCost('${type}', ${cost.id})">🗑</button>
       </div>
-      <div class="cost-fields ${isVariable ? 'cols-2' : 'cols-3'}">
-        ${!isVariable ? `<div>
-          <div class="field-label">Qty</div>
-          ${qtyField}
-        </div>` : ''}
+      <div class="cost-fields ${gridClass}">
+        ${qtyCol}
         <div>
-          <div class="field-label">Frekuensi</div>
-          <input type="number" class="field-input" min="0" value="${cost.frequency}"
-            oninput="updateCostField('${type}',${cost.id},'frequency',this.value)" />
+          <label class="field-label">Frekuensi</label>
+          <input type="number" class="field-input" value="${cost.frequency}" min="0"
+            oninput="updateCost('${type}', ${cost.id}, 'frequency', this.value)" />
         </div>
         <div>
-          <div class="field-label">Harga</div>
-          <input type="number" class="field-input right" min="0" value="${cost.price}"
-            oninput="updateCostField('${type}',${cost.id},'price',this.value)" />
+          <label class="field-label">Harga</label>
+          <input type="number" class="field-input right" value="${cost.price}" min="0"
+            oninput="updateCost('${type}', ${cost.id}, 'price', this.value)" />
         </div>
       </div>
       <div class="cost-subtotal">
-        <span class="cost-formula">${formula}</span>
-        <span class="cost-amount ${jeepActive ? 'amber' : ''}">${fmt(subtotal)}</span>
+        <span class="formula">${formula}</span>
+        <span class="amount ${cost.autoJeep ? 'jeep' : ''}">${fmt(subtotal)}</span>
       </div>
-    </div>`;
+    `;
+    container.appendChild(div);
+  });
 }
 
-// ─── RENDER ALL LISTS ─────────────────────────────────────────────────────────
-function renderLists() {
-  document.getElementById('fixedCosts').innerHTML =
-    fixedCosts.map(c => renderCostCard(c, 'fixed')).join('');
-  document.getElementById('variableCosts').innerHTML =
-    variableCosts.map(c => renderCostCard(c, 'variable')).join('');
+function updateTotals() {
+  const totalFixed = fixedCosts.reduce((s, c) =>
+    s + getQty(c) * c.frequency * c.price, 0);
+  const totalVarPer = variableCosts.reduce((s, c) =>
+    s + getQty(c) * c.frequency * c.price, 0);
+  const totalVarGroup = totalVarPer * participants;
+  const totalCost = totalFixed + totalVarGroup;
+  const profit = totalCost * (profitPct / 100);
+  const totalWithProfit = totalCost + profit;
+  const pricePerPerson = participants > 0 ? totalWithProfit / participants : 0;
+
+  document.getElementById('totalFixed').textContent        = fmt(totalFixed);
+  document.getElementById('totalVarPerPerson').textContent = fmt(totalVarPer);
+  document.getElementById('totalVarGroup').textContent     = fmt(totalVarGroup);
+  document.getElementById('varParticipantLabel').textContent = participants;
+  document.getElementById('profitValue').textContent       = fmt(profit);
+  document.getElementById('totalNoProfit').textContent     = fmt(totalCost);
+  document.getElementById('pricePerPerson').textContent    = fmt(pricePerPerson);
+  document.getElementById('totalWithProfit').textContent   = fmt(totalWithProfit);
+
+  // Summary panel
+  document.getElementById('sumFixed').textContent  = fmt(totalFixed);
+  document.getElementById('sumVar').textContent    = fmt(totalVarGroup);
+  document.getElementById('sumProfit').textContent = fmt(profit);
+  document.getElementById('sumTotal').textContent  = fmt(totalCost);
+  document.getElementById('sumProfitPct').textContent = profitPct;
 }
 
-// ─── CALCULATE & UPDATE UI ───────────────────────────────────────────────────
-function updateAll() {
-  const p         = getParticipants();
-  const jeepCount = getJeepCount();
-  const profitPct = getProfitPct();
-
-  // Jeep count info
-  document.getElementById('jeepCount').textContent = `${jeepCount} unit`;
-  document.querySelector('.jeep-formula').textContent = `(⌈${p} ÷ 5⌉)`;
-
-  // Totals
-  const totalFixed = fixedCosts.reduce((s, c) => s + resolveQty(c) * c.frequency * c.price, 0);
-  const totalVarPerPerson = variableCosts.reduce((s, c) => s + resolveQty(c) * c.frequency * c.price, 0);
-  const totalVarGroup     = totalVarPerPerson * p;
-  const totalCost         = totalFixed + totalVarGroup;
-  const profit            = totalCost * (profitPct / 100);
-  const totalWithProfit   = totalCost + profit;
-  const pricePerPerson    = p > 0 ? totalWithProfit / p : 0;
-
-  // Fixed section
-  document.getElementById('totalFixed').textContent = fmt(totalFixed);
-
-  // Variable section
-  document.getElementById('totalVarPerPerson').textContent = fmt(totalVarPerPerson);
-  document.getElementById('totalVarLabel').textContent     = `Total (${p} orang)`;
-  document.getElementById('totalVar').textContent          = fmt(totalVarGroup);
-
-  // Profit section
-  document.getElementById('profitValue').textContent = fmt(profit);
-  document.getElementById('totalCost').textContent   = fmt(totalCost);
-
-  // Sticky bottom
-  document.getElementById('pricePerPerson').textContent  = fmt(pricePerPerson);
-  document.getElementById('totalWithProfit').textContent = fmt(totalWithProfit);
-
-  // Summary detail
-  document.getElementById('sumFixed').textContent      = fmt(totalFixed);
-  document.getElementById('sumVar').textContent        = fmt(totalVarGroup);
-  document.getElementById('sumProfitLabel').textContent = `Profit (${profitPct}%)`;
-  document.getElementById('sumProfit').textContent     = fmt(profit);
-  document.getElementById('sumTotal').textContent      = fmt(totalCost);
-
-  // Re-render cost cards (for jeep qty update)
-  renderLists();
+// ── CRUD ─────────────────────────────────────────────────
+function updateCost(type, id, field, value) {
+  const list = type === 'fixed' ? fixedCosts : variableCosts;
+  const cost = list.find(c => c.id === id);
+  if (!cost) return;
+  cost[field] = (field === 'name') ? value : (parseFloat(value) || 0);
+  renderAll();
 }
 
-// ─── COUNTER CONTROLS ────────────────────────────────────────────────────────
-function changeParticipants(delta) {
-  const el = document.getElementById('participants');
-  el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
-  updateAll();
-}
-function changeProfit(delta) {
-  const el = document.getElementById('profitPct');
-  el.value = Math.max(0, (parseFloat(el.value) || 0) + delta);
-  updateAll();
-}
-
-// ─── COST MUTATIONS ───────────────────────────────────────────────────────────
-function addCost(type) {
-  if (type === 'fixed') {
-    fixedCosts.push({ id: nextFixedId++, name: '', qty: 1, frequency: 1, price: 0, autoJeep: false });
-  } else {
-    variableCosts.push({ id: nextVariableId++, name: '', qty: 1, frequency: 1, price: 0, autoJeep: false });
-  }
-  updateAll();
+function toggleJeep(type, id) {
+  const list = type === 'fixed' ? fixedCosts : variableCosts;
+  const cost = list.find(c => c.id === id);
+  if (!cost) return;
+  cost.autoJeep = !cost.autoJeep;
+  renderAll();
 }
 
 function deleteCost(type, id) {
@@ -164,80 +147,110 @@ function deleteCost(type, id) {
   } else {
     variableCosts = variableCosts.filter(c => c.id !== id);
   }
-  updateAll();
+  renderAll();
 }
 
-function toggleJeep(type, id) {
-  const list = type === 'fixed' ? fixedCosts : variableCosts;
-  const cost = list.find(c => c.id === id);
-  if (cost) cost.autoJeep = !cost.autoJeep;
-  updateAll();
+function addCost(type) {
+  if (type === 'fixed') {
+    fixedCosts.push({ id: nextFixedId++, name: '', qty: 1, frequency: 1, price: 0, autoJeep: false });
+  } else {
+    variableCosts.push({ id: nextVarId++, name: '', qty: 1, frequency: 1, price: 0, autoJeep: false });
+  }
+  renderAll();
 }
 
-function updateCostField(type, id, field, value) {
-  const list = type === 'fixed' ? fixedCosts : variableCosts;
-  const cost = list.find(c => c.id === id);
-  if (!cost) return;
-  cost[field] = field === 'name' ? value : (parseFloat(value) || 0);
-  // Only recalc totals, don't re-render cards (avoid losing focus)
-  calcOnly();
+// ── Controls ─────────────────────────────────────────────
+function changeParticipants(delta) {
+  participants = Math.max(0, participants + delta);
+  document.getElementById('participants').value = participants;
+  renderAll();
 }
 
-// Recalculate & update totals WITHOUT re-rendering cards
-function calcOnly() {
-  const p         = getParticipants();
-  const jeepCount = getJeepCount();
-  const profitPct = getProfitPct();
+function setParticipants(val) {
+  participants = Math.max(0, parseInt(val) || 0);
+  renderAll();
+}
 
-  document.getElementById('jeepCount').textContent    = `${jeepCount} unit`;
-  document.querySelector('.jeep-formula').textContent = `(⌈${p} ÷ 5⌉)`;
+function changeProfit(delta) {
+  profitPct = Math.max(0, profitPct + delta);
+  document.getElementById('profitPct').value = profitPct;
+  renderAll();
+}
 
-  const totalFixed        = fixedCosts.reduce((s, c) => s + resolveQty(c) * c.frequency * c.price, 0);
-  const totalVarPerPerson = variableCosts.reduce((s, c) => s + resolveQty(c) * c.frequency * c.price, 0);
-  const totalVarGroup     = totalVarPerPerson * p;
-  const totalCost         = totalFixed + totalVarGroup;
-  const profit            = totalCost * (profitPct / 100);
-  const totalWithProfit   = totalCost + profit;
-  const pricePerPerson    = p > 0 ? totalWithProfit / p : 0;
+function setProfit(val) {
+  profitPct = Math.max(0, parseFloat(val) || 0);
+  renderAll();
+}
 
-  document.getElementById('totalFixed').textContent         = fmt(totalFixed);
-  document.getElementById('totalVarPerPerson').textContent  = fmt(totalVarPerPerson);
-  document.getElementById('totalVarLabel').textContent      = `Total (${p} orang)`;
-  document.getElementById('totalVar').textContent           = fmt(totalVarGroup);
-  document.getElementById('profitValue').textContent        = fmt(profit);
-  document.getElementById('totalCost').textContent          = fmt(totalCost);
-  document.getElementById('pricePerPerson').textContent     = fmt(pricePerPerson);
-  document.getElementById('totalWithProfit').textContent    = fmt(totalWithProfit);
-  document.getElementById('sumFixed').textContent           = fmt(totalFixed);
-  document.getElementById('sumVar').textContent             = fmt(totalVarGroup);
-  document.getElementById('sumProfitLabel').textContent     = `Profit (${profitPct}%)`;
-  document.getElementById('sumProfit').textContent          = fmt(profit);
-  document.getElementById('sumTotal').textContent           = fmt(totalCost);
+function toggleDetail() {
+  const panel = document.getElementById('summaryDetail');
+  const icon  = document.getElementById('detailIcon');
+  const show  = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  icon.textContent = show ? '▼' : '▲';
+}
 
-  // Update subtotal in each card without full re-render
-  [...fixedCosts, ...variableCosts].forEach(cost => {
-    const isVar    = variableCosts.includes(cost);
-    const type     = isVar ? 'variable' : 'fixed';
-    const el       = document.getElementById(`card-${type}-${cost.id}`);
-    if (!el) return;
-    const qty      = resolveQty(cost);
-    const subtotal = isVar ? cost.frequency * cost.price : qty * cost.frequency * cost.price;
-    const formula  = isVar
-      ? `${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`
-      : `${qty} × ${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`;
-    const amtEl = el.querySelector('.cost-amount');
-    const fmlEl = el.querySelector('.cost-formula');
-    if (amtEl) amtEl.textContent = fmt(subtotal);
-    if (fmlEl) fmlEl.textContent = formula;
+// ── Export PDF ───────────────────────────────────────────
+function exportPDF() {
+  const totalFixed    = fixedCosts.reduce((s, c) => s + getQty(c) * c.frequency * c.price, 0);
+  const totalVarPer   = variableCosts.reduce((s, c) => s + getQty(c) * c.frequency * c.price, 0);
+  const totalVarGroup = totalVarPer * participants;
+  const totalCost     = totalFixed + totalVarGroup;
+  const profit        = totalCost * (profitPct / 100);
+  const totalWithProfit  = totalCost + profit;
+  const pricePerPerson   = participants > 0 ? totalWithProfit / participants : 0;
+  const now = new Date().toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Fill header
+  document.getElementById('pdf-date').textContent = 'Dicetak: ' + now;
+  document.getElementById('pdf-participants').textContent = participants + ' orang';
+  document.getElementById('pdf-jeep').textContent = jeepCount() + ' unit';
+
+  // Fixed costs table
+  const fixedBody = document.getElementById('pdf-fixed');
+  fixedBody.innerHTML = '';
+  fixedCosts.forEach(c => {
+    const q = getQty(c);
+    const sub = q * c.frequency * c.price;
+    fixedBody.innerHTML += `<tr>
+      <td>${c.name || '-'} ${c.autoJeep ? '🚙' : ''}</td>
+      <td>${q}</td><td>${c.frequency}</td>
+      <td>${fmt(c.price)}</td><td>${fmt(sub)}</td>
+    </tr>`;
   });
+  document.getElementById('pdf-total-fixed').textContent = fmt(totalFixed);
+
+  // Variable costs table
+  const varBody = document.getElementById('pdf-variable');
+  varBody.innerHTML = '';
+  variableCosts.forEach(c => {
+    const sub = getQty(c) * c.frequency * c.price;
+    varBody.innerHTML += `<tr>
+      <td>${c.name || '-'} ${c.autoJeep ? '🚙' : ''}</td>
+      <td>${c.frequency}</td>
+      <td>${fmt(c.price)}</td><td>${fmt(sub)}</td>
+    </tr>`;
+  });
+  document.getElementById('pdf-var-per').textContent = fmt(totalVarPer);
+  document.getElementById('pdf-var-group-label').textContent = `Total (${participants} orang)`;
+  document.getElementById('pdf-var-group').textContent = fmt(totalVarGroup);
+
+  // Summary
+  document.getElementById('pdf-sum-fixed').textContent  = fmt(totalFixed);
+  document.getElementById('pdf-sum-var').textContent    = fmt(totalVarGroup);
+  document.getElementById('pdf-sum-total').textContent  = fmt(totalCost);
+  document.getElementById('pdf-profit-label').textContent = `Profit (${profitPct}%)`;
+  document.getElementById('pdf-sum-profit').textContent = fmt(profit);
+
+  // Result
+  document.getElementById('pdf-grand-total').textContent     = fmt(totalWithProfit);
+  document.getElementById('pdf-price-per-person').textContent = fmt(pricePerPerson);
+
+  // Show and print
+  document.getElementById('pdfPreview').style.display = 'block';
+  window.print();
+  document.getElementById('pdfPreview').style.display = 'none';
 }
 
-// ─── SUMMARY TOGGLE ──────────────────────────────────────────────────────────
-function toggleSummary() {
-  summaryOpen = !summaryOpen;
-  document.getElementById('summaryDetail').classList.toggle('hidden', !summaryOpen);
-  document.getElementById('detailBtn').textContent = summaryOpen ? '▼ Detail' : '▲ Detail';
-}
-
-// ─── INIT ────────────────────────────────────────────────────────────────────
-updateAll();
+// ── Init ──────────────────────────────────────────────────
+renderAll();
