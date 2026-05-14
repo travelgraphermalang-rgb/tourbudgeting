@@ -130,7 +130,9 @@ function updateCost(type, id, field, value) {
   const cost = list.find(c => c.id === id);
   if (!cost) return;
   cost[field] = (field === 'name') ? value : (parseFloat(value) || 0);
-  renderAll();
+  // Jangan rebuild DOM saat mengetik — cukup update subtotal & total
+  updateSubtotal(type, id);
+  updateTotals();
 }
 
 function toggleJeep(type, id) {
@@ -160,26 +162,31 @@ function addCost(type) {
 }
 
 // ── Controls ─────────────────────────────────────────────
+function setParticipants(val) {
+  participants = Math.max(0, parseInt(val) || 0);
+  updateTotals();
+  document.getElementById('jeepCount').textContent = jeepCount() + ' unit';
+  // Update semua jeep-qty-display tanpa rebuild
+  document.querySelectorAll('.jeep-qty-display').forEach(el => {
+    el.textContent = jeepCount() + ' 🚙';
+  });
+}
+
 function changeParticipants(delta) {
   participants = Math.max(0, participants + delta);
   document.getElementById('participants').value = participants;
-  renderAll();
-}
-
-function setParticipants(val) {
-  participants = Math.max(0, parseInt(val) || 0);
-  renderAll();
+  setParticipants(participants);
 }
 
 function changeProfit(delta) {
   profitPct = Math.max(0, profitPct + delta);
   document.getElementById('profitPct').value = profitPct;
-  renderAll();
+  updateTotals();
 }
 
 function setProfit(val) {
   profitPct = Math.max(0, parseFloat(val) || 0);
-  renderAll();
+  updateTotals();
 }
 
 function toggleDetail() {
@@ -250,6 +257,32 @@ function exportPDF() {
   document.getElementById('pdfPreview').style.display = 'block';
   window.print();
   document.getElementById('pdfPreview').style.display = 'none';
+}
+
+// ── Update subtotal satu item tanpa rebuild DOM ───────────
+function updateSubtotal(type, id) {
+  const isFixed = type === 'fixed';
+  const list = isFixed ? fixedCosts : variableCosts;
+  const cost = list.find(c => c.id === id);
+  if (!cost) return;
+  const qty = getQty(cost);
+  const subtotal = isFixed
+    ? qty * cost.frequency * cost.price
+    : getQty(cost) * cost.frequency * cost.price;
+  const formula = isFixed
+    ? `${qty} × ${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`
+    : `${cost.frequency} × ${cost.price.toLocaleString('id-ID')}`;
+
+  const container = document.getElementById(isFixed ? 'fixedCostList' : 'variableCostList');
+  const items = container.querySelectorAll('.cost-item');
+  const listArr = Array.from(isFixed ? fixedCosts : variableCosts);
+  const idx = listArr.findIndex(c => c.id === id);
+  if (idx < 0 || !items[idx]) return;
+  const item = items[idx];
+  const formulaEl = item.querySelector('.formula');
+  const amountEl  = item.querySelector('.amount');
+  if (formulaEl) formulaEl.textContent = formula;
+  if (amountEl)  amountEl.textContent  = fmt(subtotal);
 }
 
 // ── Init ──────────────────────────────────────────────────
