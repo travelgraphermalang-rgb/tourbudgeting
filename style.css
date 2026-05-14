@@ -90,12 +90,21 @@ body {
 .counter-input::-webkit-outer-spin-button,
 .counter-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-.profit-input-wrap { position: relative; flex: 1; }
-.profit-input-wrap .counter-input { padding-right: 28px; }
+.profit-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.profit-input-wrap .counter-input {
+  padding-right: 32px;
+  min-width: 0;
+  width: 100%;
+}
 .pct-sign {
   position: absolute; right: 10px; top: 50%;
   transform: translateY(-50%);
-  font-size: 18px; font-weight: 700; color: #f97316;
+  font-size: 16px; font-weight: 700; color: #f97316;
+  pointer-events: none;
 }
 
 /* ── Jeep Info ── */
